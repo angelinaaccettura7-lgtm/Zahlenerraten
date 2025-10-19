@@ -1,0 +1,293 @@
+
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zahlenraten Online</title>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js"></script>
+
+<!-- 🌈 Styles -->
+<style>
+  :root {
+    --primary: #4f46e5;
+    --accent: #22c55e;
+    --bg: #f4f4f8;
+    --text: #222;
+  }
+
+  body {
+    font-family: "SF Pro Rounded", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    text-align: center;
+    margin: 0;
+    padding: 0;
+  }
+
+  header {
+    background: var(--primary);
+    color: white;
+    padding: 1.2em;
+    font-size: 1.6em;
+    font-weight: 600;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  }
+
+  main {
+    padding: 20px;
+    max-width: 480px;
+    margin: auto;
+  }
+
+  input {
+    padding: 12px;
+    font-size: 1.1em;
+    border-radius: 10px;
+    border: 2px solid #ccc;
+    width: 90%;
+    text-align: center;
+    transition: border-color .2s;
+  }
+
+  input:focus {
+    border-color: var(--primary);
+    outline: none;
+  }
+
+  button {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: background .2s, transform .1s;
+  }
+
+  button:hover {
+    background: #3730a3;
+    transform: translateY(-1px);
+  }
+
+  #menu, #join, #game {
+    display: none;
+    animation: fadeIn .3s ease;
+  }
+
+  #menu.active, #join.active, #game.active {
+    display: block;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  #log {
+    background: white;
+    border-radius: 12px;
+    padding: 10px 15px;
+    max-height: 300px;
+    overflow-y: auto;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+    margin-top: 15px;
+    text-align: left;
+  }
+
+  .msg {
+    background: #e0e7ff;
+    padding: 8px 10px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    animation: pop .2s ease;
+  }
+
+  .msg.self {
+    background: #dcfce7;
+    text-align: right;
+  }
+
+  @keyframes pop {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .status {
+    font-size: 1.1em;
+    margin-top: 10px;
+    color: var(--primary);
+  }
+</style>
+</head>
+
+<body>
+  <header>🔢 Zahlenraten Online</header>
+  <main>
+    <section id="menu" class="active">
+      <h2>Neues Spiel</h2>
+      <button onclick="createRoom()">🎮 Spiel erstellen</button>
+      <p>oder beitreten:</p>
+      <input id="joinCode" placeholder="Raumcode (z. B. ABC123)">
+      <button onclick="joinRoom()">➡️ Beitreten</button>
+    </section>
+
+    <section id="join">
+      <h2>Spiel beitreten</h2>
+      <input id="playerName" placeholder="Dein Name">
+      <br><br>
+      <input id="secret" maxlength="6" pattern="[0-9]*" placeholder="Dein Geheimcode (6 Ziffern)">
+      <br><br>
+      <button onclick="ready()">✅ Bereit</button>
+    </section>
+
+    <section id="game">
+      <h3>Raumcode: <span id="roomCodeDisplay"></span></h3>
+      <div class="status" id="status">Warte auf Gegner…</div>
+
+      <br>
+      <input id="guess" maxlength="6" pattern="[0-9]*" placeholder="Rate 6 Ziffern">
+      <button onclick="sendGuess()">Senden</button>
+
+      <div id="log"></div>
+    </section>
+  </main>
+
+  <script>
+  /* === Deine Firebase Config hier einfügen === */
+  const firebaseConfig = {<script type="module">
+  // Import the functions you need from the SDKs you need
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-analytics.js";
+  // TODO: Add SDKs for Firebase products that you want to use
+  // https://firebase.google.com/docs/web/setup#available-libraries
+
+  // Your web app's Firebase configuration
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+    apiKey: "AIzaSyCwT44_IQQOF_ks7lgeTDsARN_krP5vkC0",
+    authDomain: "zahlenraten-b5bb2.firebaseapp.com",
+    projectId: "zahlenraten-b5bb2",
+    storageBucket: "zahlenraten-b5bb2.firebasestorage.app",
+    messagingSenderId: "999362491209",
+    appId: "1:999362491209:web:b632412e008f7d93072098",
+    measurementId: "G-B84DP19YVB"
+  };
+
+  // Initialize Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+</script>
+    apiKey: "DEIN_API_KEY",
+    authDomain: "DEIN_AUTH_DOMAIN",
+    databaseURL: "DEIN_DATABASE_URL",
+    projectId: "DEIN_PROJECT_ID",
+    storageBucket: "DEIN_STORAGE_BUCKET",
+    messagingSenderId: "DEIN_MSG_ID",
+    appId: "DEIN_APP_ID"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  let roomCode = "";
+  let playerName = "";
+  let secret = "";
+  let opponent = "";
+  let playerPath;
+
+  const show = id => {
+    ["menu","join","game"].forEach(x => document.getElementById(x).classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+  };
+
+  function createRoom() {
+    roomCode = Math.random().toString(36).substring(2,8).toUpperCase();
+    db.ref("rooms/"+roomCode).set({players:{},guesses:[]});
+    document.getElementById("roomCodeDisplay").textContent = roomCode;
+    show("join");
+  }
+
+  function joinRoom() {
+    const code = document.getElementById("joinCode").value.trim().toUpperCase();
+    if (!code) return alert("Bitte Code eingeben!");
+    roomCode = code;
+    document.getElementById("roomCodeDisplay").textContent = roomCode;
+    show("join");
+  }
+
+  function ready() {
+    playerName = document.getElementById("playerName").value.trim() || "Spieler";
+    secret = document.getElementById("secret").value.trim();
+    if (secret.length !== 6 || !/^[0-9]+$/.test(secret))
+      return alert("Bitte 6-stellige Zahl eingeben!");
+
+    playerPath = "rooms/"+roomCode+"/players/"+playerName;
+    db.ref(playerPath).set({secret,ready:true});
+    show("game");
+    document.getElementById("status").textContent = "Warte auf Gegner…";
+
+    db.ref("rooms/"+roomCode+"/players").on("value", snap => {
+      const players = snap.val() || {};
+      const names = Object.keys(players);
+      if (names.length === 2) {
+        opponent = names.find(n => n !== playerName);
+        document.getElementById("status").textContent = "Gegner: "+opponent;
+      }
+    });
+
+    db.ref("rooms/"+roomCode+"/guesses").on("child_added", snap => {
+      const data = snap.val();
+      if (!data) return;
+      const log = document.getElementById("log");
+      const div = document.createElement("div");
+      div.classList.add("msg");
+
+      if (data.to === playerName && data.correct === undefined) {
+        // Gegner hat geraten
+        const correct = countCorrectPositions(data.value, secret);
+        db.ref("rooms/"+roomCode+"/guesses").push({
+          from: playerName, to: data.from, value: data.value, correct
+        });
+        div.textContent = `${data.from} rät ${data.value} → ${correct} richtig`;
+      }
+      else if (data.from === opponent && data.correct !== undefined) {
+        div.textContent = `${data.from} (Antwort): ${data.value} → ${data.correct} richtig`;
+      }
+      else if (data.to === playerName && data.correct !== undefined) {
+        div.classList.add("self");
+        div.textContent = `Du: ${data.value} → ${data.correct} richtig`;
+        if (data.correct === 6)
+          alert("🎉 Du hast gewonnen!");
+      }
+
+      log.prepend(div);
+    });
+  }
+
+  function sendGuess() {
+    const guess = document.getElementById("guess").value.trim();
+    if (guess.length !== 6 || !/^[0-9]+$/.test(guess))
+      return alert("Bitte 6-stellige Zahl eingeben!");
+    if (!opponent)
+      return alert("Kein Gegner verbunden!");
+
+    db.ref("rooms/"+roomCode+"/guesses").push({
+      from: playerName, to: opponent, value: guess
+    });
+    document.getElementById("guess").value = "";
+  }
+
+  const countCorrectPositions = (g,s) =>
+    [...g].filter((ch,i)=>ch===s[i]).length;
+  </script>
+</body>
+</html>
